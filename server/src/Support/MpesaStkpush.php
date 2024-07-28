@@ -16,12 +16,12 @@ class MpesaStkpush
 
     public function __construct($config)
     {
-        $this->short_code = $config['short_code'];
-        $this->consumer_key = $config['consumer_key'];
-        $this->consumer_secret = $config['consumer_secret'];
-        $this->passkey = $config['passkey'];
-        $this->callback_url = $config['callback_url'];
-        $this->env = $config['env']; // 'sandbox' or 'live'
+        $this->short_code = $config->short_code;
+        $this->consumer_key = $config->consumer_key;
+        $this->consumer_secret = $config->consumer_secret;
+        $this->passkey = $config->passkey;
+        $this->callback_url = $config->callback_url;
+        $this->env = $config->env; // 'sandbox' or 'live'
     }
 
     protected function getAccessToken()

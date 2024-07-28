@@ -95,14 +95,6 @@ class CheckoutController extends Controller
 
     public static function initializeMpesaSTKCheckout($customer, $gateway, $serviceQuote, $cart, $checkoutOptions, Request $request)
     {
-        Log::info('initializeMpesaSTKCheckout called', [
-            'customer' => $customer,
-            'gateway' => $gateway,
-            'serviceQuote' => $serviceQuote,
-            'cart' => $cart,
-            'checkoutOptions' => $checkoutOptions,
-        ]);
-
         $isPickup = $checkoutOptions->is_pickup;
 
         // get amount/subtotal
@@ -110,7 +102,7 @@ class CheckoutController extends Controller
         $currency = $cart->currency ?? session('storefront_currency');
 
         // get mpesa configuration from request
-        $mpesaConfig = $request->input('mpesa_stk');
+        $mpesaConfig = $gateway->config;
 
         if (!$mpesaConfig) {
             Log::error('Mpesa gateway configuration missing');
@@ -118,7 +110,7 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Gateway not configured correctly!'], 400);
         }
 
-        $mpesaService = new MpesaStkpush($mpesaConfig);
+        $mpesaService = new MpesaStkpush($mpesaConfig); 
 
         // Retrieve and format the phone number from customer information
         $phoneNumber = static::formatPhoneNumber($customer->phone);
@@ -176,30 +168,30 @@ class CheckoutController extends Controller
         }
     }
 
-    public static function calculateCheckoutAmount($cart, $serviceQuote, $checkoutOptions)
-    {
-        $amount = $cart->total;
+    // public static function calculateCheckoutAmount($cart, $serviceQuote, $checkoutOptions)
+    // {
+    //     $amount = $cart->total;
 
-        if ($serviceQuote) {
-            $amount += $serviceQuote->amount;
-        }
+    //     if ($serviceQuote) {
+    //         $amount += $serviceQuote->amount;
+    //     }
 
-        if ($checkoutOptions->tip) {
-            $amount += $checkoutOptions->tip;
-        }
+    //     if ($checkoutOptions->tip) {
+    //         $amount += $checkoutOptions->tip;
+    //     }
 
-        if ($checkoutOptions->delivery_tip) {
-            $amount += $checkoutOptions->delivery_tip;
-        }
+    //     if ($checkoutOptions->delivery_tip) {
+    //         $amount += $checkoutOptions->delivery_tip;
+    //     }
 
-        return $amount;
-    }
+    //     return $amount;
+    // }
 
     private static function formatPhoneNumber($phone)
     {
-        $phone = preg_replace('/\D/', '', $phone);
+        $phone = preg_replace('/\D/', '', $phone); 
         if (preg_match('/^(?:254|\+254|0)?(1|7)\d{8}$/', $phone, $matches)) {
-            return '254' . $matches[1] . substr($phone, -7);
+            return '254' . $matches[1] . substr($phone, -8);
         }
         return false;
     }
