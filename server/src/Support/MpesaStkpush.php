@@ -24,14 +24,9 @@ class MpesaStkpush
         $this->env = $config->env; // 'sandbox' or 'live'
     }
 
-    /**
-     * Retrieve access token from M-PESA API.
-     */
     protected function getAccessToken()
     {
-        $access_token_url = ($this->env === 'live') 
-            ? 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials' 
-            : 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+        $access_token_url = ($this->env === 'live') ? 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials' : 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
 
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode($this->consumer_key . ':' . $this->consumer_secret),
@@ -46,9 +41,6 @@ class MpesaStkpush
         return $response->json()['access_token'];
     }
 
-    /**
-     * Initiate Lipa Na M-PESA STK push.
-     */
     public function lipaNaMpesa($amount, $phone, $accountReference)
     {
         $timestamp = date('YmdHis');
@@ -59,12 +51,7 @@ class MpesaStkpush
             return null;
         }
 
-        $stk_push_url = ($this->env === 'live') 
-            ? 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' 
-            : 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-
-        // Custom transaction description
-        $transaction_desc = "Dear customer, you are about to pay {$amount} Kshs to Lipagas Limited. Enter your M-PESA PIN to complete the transaction.";
+        $stk_push_url = ($this->env === 'live') ? 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' : 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $access_token,
@@ -80,7 +67,7 @@ class MpesaStkpush
             'PhoneNumber' => $phone,
             'CallBackURL' => $this->callback_url,
             'AccountReference' => $accountReference,
-            'TransactionDesc' => $transaction_desc,
+            'TransactionDesc' => 'Payment for ' . $accountReference,
         ]);
 
         if ($response->failed()) {
