@@ -53,7 +53,7 @@ class MpesaStkpush
 
         $stk_push_url = ($this->env === 'live') ? 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' : 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
 
-    
+       
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $access_token,
             'Content-Type' => 'application/json',
@@ -68,7 +68,7 @@ class MpesaStkpush
             'PhoneNumber' => $phone,
             'CallBackURL' => $this->callback_url,
             'AccountReference' => $accountReference,
-            'TransactionDesc' => 'Do you want to pay ' . $amount . ' to Lipagas Limited. Enter PIN',
+            'TransactionDesc' => 'Payment to Lipagas Limited'
 
         ]);
 
