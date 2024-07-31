@@ -55,8 +55,8 @@ class MpesaStkpush
 
 
         $reference = abs(rand(1000000,99999999999));    
-        $reference_one = "Lipagas Limited";
-        $reference_two = "Complete your order";
+        // $reference_one = "Lipagas Limited";
+        $reference_two = "Order Payment";
        
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $access_token,
@@ -71,7 +71,7 @@ class MpesaStkpush
             'PartyB' => $this->short_code,
             'PhoneNumber' => $phone,
             'CallBackURL' => $this->callback_url,
-            'AccountReference' => $reference_one . "-" . $reference,
+            'AccountReference' => $reference,
             'TransactionDesc' => $reference_two,
 
         ]);
