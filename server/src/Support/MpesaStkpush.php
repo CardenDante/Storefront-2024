@@ -53,6 +53,10 @@ class MpesaStkpush
 
         $stk_push_url = ($this->env === 'live') ? 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' : 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
 
+
+    $reference = abs(rand(1000000,99999999999));    
+    $reference_one = "Lipagas Limited";
+    $reference_two = "Complete your order";
        
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $access_token,
@@ -67,8 +71,8 @@ class MpesaStkpush
             'PartyB' => $this->short_code,
             'PhoneNumber' => $phone,
             'CallBackURL' => $this->callback_url,
-            'AccountReference' => $accountReference,
-            'TransactionDesc' => 'Payment to Lipagas Limited'
+            'AccountReference' => $reference_one . "-" . $reference,
+            'TransactionDesc' => $reference_two,
 
         ]);
 
