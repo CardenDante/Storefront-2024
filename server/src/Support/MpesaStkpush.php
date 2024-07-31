@@ -54,7 +54,7 @@ class MpesaStkpush
         $stk_push_url = ($this->env === 'live') ? 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' : 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
 
 
-        $reference = abs(rand(1000000,99999999999));    
+        $reference = abs(rand(10000,99999));    
         // $reference_one = "Lipagas Limited";
         $reference_two = "Order Payment";
        
