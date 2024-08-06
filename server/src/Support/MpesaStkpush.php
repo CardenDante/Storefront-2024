@@ -41,6 +41,31 @@ class MpesaStkpush
         return $response->json()['access_token'];
     }
 
+    protected function formatPhoneNumberForMpesa($phoneNumber)
+    {
+        // Remove any non-numeric characters
+        $phoneNumber = preg_replace('/\D/', '', $phoneNumber);
+
+        // Check if the phone number starts with '254'
+        if (substr($phoneNumber, 0, 3) !== '254') {
+            // If the phone number starts with '0', replace it with '254'
+            if (substr($phoneNumber, 0, 1) === '0') {
+                $phoneNumber = '254' . substr($phoneNumber, 1);
+            }
+        }
+
+        // Ensure the phone number does not start with '+'
+        $phoneNumber = ltrim($phoneNumber, '+');
+
+        // Validate the number starts with '2547' or '2541' and has exactly 12 digits
+        if (preg_match('/^254[17][0-9]{8}$/', $phoneNumber)) {
+            return $phoneNumber;
+        } else {
+            // Return false or an error message if the format is incorrect
+            return false;
+        }
+    }
+
     public function lipaNaMpesa($amount, $phone, $accountReference)
     {
         $timestamp = date('YmdHis');
@@ -50,7 +75,12 @@ class MpesaStkpush
         if (!$access_token) {
             return null;
         }
-
+        // Format the phone number
+        $phone = $this->formatPhoneNumberForMpesa($phone);
+        if (!$phone) {
+            Log::error('Invalid phone number format', ['phone' => $phone]);
+            return null;
+        }
         $stk_push_url = ($this->env === 'live') ? 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' : 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
 
 
