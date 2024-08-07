@@ -175,4 +175,9 @@ class MpesaStkpush
             ...str_split(substr_replace($timestamp, '', 0, 4), 2)
         );
     }
+
+    public static function formatAmount($amount)
+    {
+        return round($amount/100);
+    }
 }

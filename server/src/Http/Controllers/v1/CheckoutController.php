@@ -126,13 +126,13 @@ class CheckoutController extends Controller
         // Log details before initiating STK push
         Log::info('Initiating Mpesa STK Push', [
             'customer' => $customer,
-            'amount' => $amount,
+            'amount' => MpesaStkpush::formatAmount($amount),
             'currency' => $currency,
             'checkoutOptions' => $checkoutOptions,
             'phoneNumber' => $phoneNumber,
         ]);
 
-        $mpesaResponse = $mpesaService->lipaNaMpesa($amount, $phoneNumber, 'Transaction#' . Str::random(10));
+        $mpesaResponse = $mpesaService->lipaNaMpesa(MpesaStkpush::formatAmount($amount), $phoneNumber, 'Transaction#' . Str::random(10));
 
         if (!$mpesaResponse) {
             Log::error('Error initiating Mpesa STK Push', ['response' => $mpesaResponse]);
@@ -165,7 +165,7 @@ class CheckoutController extends Controller
             MpesaTransaction::create([
                 'merchant_request_id'   => $mpesaResponse['MerchantRequestID'],
                 'checkout_request_id'   => $mpesaResponse['CheckoutRequestID'], 
-                'amount'                => $amount,
+                'amount'                => MpesaStkpush::formatAmount($amount),
                 'phone_number'          => str_replace('+', '', $phoneNumber), 
                 'status'                => 'PENDING',
             ]);
