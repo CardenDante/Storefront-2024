@@ -54,6 +54,7 @@ class StorefrontServiceProvider extends CoreServiceProvider
      */
     public $commands = [
         \Fleetbase\Storefront\Console\Commands\NotifyStorefrontOrderNearby::class,
+        \Fleetbase\Storefront\Console\Commands\ProcessPendingMpesaTransactions::class,
     ];
 
     /**
@@ -88,6 +89,7 @@ class StorefrontServiceProvider extends CoreServiceProvider
         $this->registerCommands();
         $this->scheduleCommands(function ($schedule) {
             $schedule->command('storefront:notify-order-nearby')->everyMinute()->storeOutputInDb();
+            $schedule->command('mpesa:process-pending')->everyTenMinutes();
         });
         $this->registerObservers();
         $this->registerMiddleware();

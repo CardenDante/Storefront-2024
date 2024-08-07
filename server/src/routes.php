@@ -15,6 +15,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('storefront.api.routing.prefix', 'storefront'))->namespace('Fleetbase\Storefront\Http\Controllers')->group(
     function ($router) {
+
+        
+        Route::prefix('v1')
+            ->namespace('v1')
+            ->group(function ($router) {
+
+                // Add the Mpesa callback route
+                $router->post('/mpesa/callback', 'CheckoutController@mpesaCallback')->name('mpesa.callback');
+            });
+
         /*
         |--------------------------------------------------------------------------
         | Consumable Storefront API Routes
@@ -40,8 +50,6 @@ Route::prefix(config('storefront.api.routing.prefix', 'storefront'))->namespace(
                 $router->group(['prefix' => 'checkouts'], function () use ($router) {
                     $router->get('before', 'CheckoutController@beforeCheckout');
                     $router->post('capture', 'CheckoutController@captureOrder');
-                    // Add the Mpesa callback route
-                    $router->post('mpesa/callback', 'CheckoutController@mpesaCallback')->name('mpesa.callback');
                 });
 
                 // storefront/v1/service-quotes

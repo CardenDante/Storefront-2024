@@ -2,6 +2,7 @@
 
 namespace Fleetbase\Storefront\Support;
 
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -113,5 +114,65 @@ class MpesaStkpush
         }
 
         return $response->json();
+    }
+
+    public function queryTransaction($checkoutRequestId)
+    {
+        try {
+
+            $query_url = $this->env === 'live' ?
+                'https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query' :
+                'https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query';
+
+            $timestamp = date('YmdHis');
+            $password  = base64_encode($this->short_code . $this->passkey . $timestamp);
+
+            $access_token = $this->getAccessToken();
+            if (!$access_token) {
+                throw new Exception('Failed to get access token');
+            }
+
+            $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Content-Type'  => 'application/json'
+                ])
+                ->post($query_url, [
+                    'BusinessShortCode' => $this->short_code,
+                    'Password'          => $password,
+                    'Timestamp'         => $timestamp,
+                    'CheckoutRequestID' => $checkoutRequestId, 
+                ]);
+
+            if ($response->failed()) {
+                $error = $response->json()['errorMessage'];
+                throw new Exception("StkPushQuery failed: $error");
+            }
+
+            return $response->json();
+        }
+        catch (Exception $e) {
+            Log::info('MpesaStkpush::queryTransaction failed');
+            Log::error($e);
+            return null;
+        }
+    }
+
+    public static function getMetadataByName($metadata, $name)
+    {
+        return array_values(
+                    array_filter(
+                        $metadata, 
+                        fn ($item) => $item['Name'] == $name
+                    )
+                )[0]['Value'];
+    }
+
+    public static function parseTimestamp($timestamp) 
+    {
+        return sprintf(
+            "%d-%d-%d %d:%d:%d",
+            substr($timestamp, 0, 4),
+            ...str_split(substr_replace($timestamp, '', 0, 4), 2)
+        );
     }
 }

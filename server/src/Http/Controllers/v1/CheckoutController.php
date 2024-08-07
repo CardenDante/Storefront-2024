@@ -2,6 +2,7 @@
 
 namespace Fleetbase\Storefront\Http\Controllers\v1;
 
+use Exception;
 use Fleetbase\FleetOps\Http\Resources\v1\Order as OrderResource;
 use Fleetbase\FleetOps\Models\Contact;
 use Fleetbase\FleetOps\Models\Entity;
@@ -19,6 +20,7 @@ use Fleetbase\Storefront\Models\Cart;
 use Fleetbase\Storefront\Models\Checkout;
 use Fleetbase\Storefront\Models\Customer;
 use Fleetbase\Storefront\Models\Gateway;
+use Fleetbase\Storefront\Models\MpesaTransaction;
 use Fleetbase\Storefront\Models\Product;
 use Fleetbase\Storefront\Models\Store;
 use Fleetbase\Storefront\Models\StoreLocation;
@@ -155,6 +157,17 @@ class CheckoutController extends Controller
                 'is_pickup' => $isPickup,
                 'options' => $checkoutOptions,
                 'cart_state' => $cart->toArray(),
+                'merchant_request_id' => $mpesaResponse['MerchantRequestID'],
+                'checkout_request_id' => $mpesaResponse['CheckoutRequestID'],
+            ]);
+
+            // create pending mpesa_transaction
+            MpesaTransaction::create([
+                'merchant_request_id'   => $mpesaResponse['MerchantRequestID'],
+                'checkout_request_id'   => $mpesaResponse['CheckoutRequestID'], 
+                'amount'                => $amount,
+                'phone_number'          => str_replace('+', '', $phoneNumber), 
+                'status'                => 'PENDING',
             ]);
 
             return response()->json([
@@ -195,7 +208,8 @@ class CheckoutController extends Controller
         }
         return false;
     }
-       public static function initializeCashCheckout(Contact $customer, Gateway $gateway, ServiceQuote $serviceQuote, Cart $cart, $checkoutOptions)
+
+    public static function initializeCashCheckout(Contact $customer, Gateway $gateway, ServiceQuote $serviceQuote, Cart $cart, $checkoutOptions)
     {
         // check if pickup order
         $isPickup = $checkoutOptions->is_pickup;
@@ -1010,6 +1024,67 @@ class CheckoutController extends Controller
 
     public function afterCheckout(Request $request)
     {
+    }
+
+    public function mpesaCallback(Request $request)
+    {
+        try {
+
+            $response           = $request->json('Body')['stkCallback'];
+            $merchantRequestId  = $response['MerchantRequestID'];
+            $checkoutRequestId  = $response['CheckoutRequestID'];
+            $resultCode         = $response['ResultCode'];
+            
+            if ($resultCode == 0) {
+
+                $gateway        = Gateway::where('code', 'mpesa_stk')->first();
+                $mpesaService   = new MpesaStkpush($gateway->config);
+
+                $metadata           = $response['CallbackMetadata']['Item'];
+                $transactionDate    = MpesaStkpush::parseTimestamp(MpesaStkpush::getMetadataByName($metadata, 'TransactionDate'));
+                $amount             = MpesaStkpush::getMetadataByName($metadata, 'Amount');
+                $phoneNumber        = MpesaStkpush::getMetadataByName($metadata, 'PhoneNumber');
+                $mpesaReceiptNumber = MpesaStkpush::getMetadataByName($metadata, 'MpesaReceiptNumber');
+
+                // query transaction status
+                $queryResponse = $mpesaService->queryTransaction($checkoutRequestId);
+
+                if (!$queryResponse ) {
+                    throw new Exception('Failed to query stk push transaction');
+                }
+
+                // create mpesa_transaction record
+                $transactionStatus = $queryResponse['ResultCode'] == 0 ? 'SUCCESS' : 'FAILED';
+
+                MpesaTransaction::updateOrCreate([
+                    'merchant_request_id'   => $merchantRequestId, 
+                    'checkout_request_id'   => $checkoutRequestId, 
+                ], [
+                    'amount'                => $amount, 
+                    'mpesa_receipt_number'  => $mpesaReceiptNumber,
+                    'transaction_date'      => $transactionDate, 
+                    'phone_number'          => $phoneNumber, 
+                    'status'                => $transactionStatus,
+                ]);
+
+                return 'OK';
+            }
+            else {
+
+                MpesaTransaction::updateOrCreate([
+                    'merchant_request_id'   => $merchantRequestId, 
+                    'checkout_request_id'   => $checkoutRequestId, 
+                ], [
+                    'status'                => 'FAILED',
+                ]);
+
+                return '!OK';
+            }
+        } 
+        catch (Exception $e) {
+            Log::info('Mpesa Callback failed');
+            Log::error($e);
+        }
     }
 
     /**
