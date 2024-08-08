@@ -5,7 +5,7 @@ namespace Fleetbase\Storefront\Models;
 use Fleetbase\Models\Model;
 use Fleetbase\Traits\HasUuid;
 
-class MpesaTransaction extends Model
+class MpesaTransaction extends StorefrontModel
 {
     use HasUuid;
 
