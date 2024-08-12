@@ -50,6 +50,7 @@ Route::prefix(config('storefront.api.routing.prefix', 'storefront'))->namespace(
                 $router->group(['prefix' => 'checkouts'], function () use ($router) {
                     $router->get('before', 'CheckoutController@beforeCheckout');
                     $router->post('capture', 'CheckoutController@captureOrder');
+                    $router->get('query-mpesa-transaction', 'CheckoutController@queryMpesaTransactionStatus');
                 });
 
                 // storefront/v1/service-quotes
