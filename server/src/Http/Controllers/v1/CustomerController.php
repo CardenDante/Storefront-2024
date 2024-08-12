@@ -16,6 +16,8 @@ use Fleetbase\Models\VerificationCode;
 use Fleetbase\Storefront\Http\Requests\CreateCustomerRequest;
 use Fleetbase\Storefront\Http\Requests\VerifyCreateCustomerRequest;
 use Fleetbase\Storefront\Http\Resources\Customer;
+use Fleetbase\Storefront\Models\Checkout;
+use Fleetbase\Storefront\Models\MpesaTransaction;
 use Fleetbase\Storefront\Support\Storefront;
 use Fleetbase\Support\Utils;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -82,7 +84,37 @@ class CustomerController extends Controller
             }
         });
 
-        return OrderResource::collection($results);
+        // add mpesa transaction
+        $orderResource  = OrderResource::collection($results);
+        $orderResArray  = json_decode($orderResource->toJson(), true);
+
+        $customerOrders = [];
+        foreach ($orderResArray as $ord) {
+
+            $customerOrder  = $ord;
+            $mpesaPayment   = null;
+            $order          = Order::where('public_id', $customerOrder['id'])->first();
+            $checkout       = Checkout::where('order_uuid', $order->uuid)->first();
+            if ($checkout) {
+                
+                $mpesaTransaction = MpesaTransaction::where('checkout_request_id', $checkout->checkout_request_id)->first();
+                if ($mpesaTransaction) {
+                    $mpesaPayment = [
+                        'amount'                => $mpesaTransaction->amount, 
+                        'mpesa_receipt_number'  => $mpesaTransaction->mpesa_receipt_number,
+                        'transaction_date'      => $mpesaTransaction->transaction_date, 
+                        'phone_number'          => $mpesaTransaction->phone_number, 
+                        'status'                => $mpesaTransaction->status,   
+                    ];
+                }
+            }
+
+            $customerOrder['mpesa_transaction'] = $mpesaPayment;
+
+            array_push($customerOrders, $customerOrder);
+        }
+
+        return response()->json($customerOrders, 200);
     }
 
     /**
