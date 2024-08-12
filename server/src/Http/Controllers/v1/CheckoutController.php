@@ -704,7 +704,25 @@ class CheckoutController extends Controller
             'captured' => true,
         ]);
 
-        return new OrderResource($order);
+        $orderResource = new OrderResource($order);
+        $orderResArray = json_decode($orderResource->toJson(), true);
+
+        // add mpesa transaction
+        $mpesaPayment     = [];
+        $mpesaTransaction = MpesaTransaction::where('checkout_request_id', $checkout->checkout_request_id)->first();
+        if ($mpesaTransaction) {
+            $mpesaPayment = [
+                'amount'                => $mpesaTransaction->amount, 
+                'mpesa_receipt_number'  => $mpesaTransaction->mpesa_receipt_number,
+                'transaction_date'      => $mpesaTransaction->transaction_date, 
+                'phone_number'          => $mpesaTransaction->phone_number, 
+                'status'                => $mpesaTransaction->status,   
+            ];
+        }
+
+        $orderResArray['mpesa_transaction'] = $mpesaPayment;
+
+        return $orderResArray;
     }
 
     public function captureMultipleOrders(CaptureOrderRequest $request)
@@ -1085,6 +1103,22 @@ class CheckoutController extends Controller
             Log::info('Mpesa Callback failed');
             Log::error($e);
         }
+    }
+
+    public function queryMpesaTransactionStatus(Request $request)
+    {
+        $checkoutRequestId = $request->query('checkout_request_id');
+
+        $transaction = MpesaTransaction::where('checkout_request_id', $checkoutRequestId)->first();
+        if (!$transaction) {
+            return response()->json([
+                'error'  => 'The mpesa transaction does not exist',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => $transaction->status,
+        ], 200);
     }
 
     /**
