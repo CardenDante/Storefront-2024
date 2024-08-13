@@ -42,7 +42,9 @@ class ProcessPendingMpesaTransactions extends Command
             $queryResponse = $mpesaService->queryTransaction($transaction->checkout_request_id);
 
             if (!$queryResponse ) {
-                $this->error('Failed to query stk push transaction');
+                $this->error('Failed to query stk push transaction for: ' . $transaction->checkout_request_id);
+                Log::info('Response', [ $queryResponse, $transaction ]);
+                continue;
             }
 
             // update mpesa_transaction record
