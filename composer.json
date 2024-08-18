@@ -23,7 +23,7 @@
     "require": {
         "php": "^8.0",
         "fleetbase/core-api": "dev-main",
-        "fleetbase/fleetops-api": "^0.4.28",
+        "fleetbase/fleetops-api": "dev-main",
         "geocoder-php/google-maps-places-provider": "^1.4",
         "laravel-notification-channels/apn": "^5.0",
         "laravel-notification-channels/fcm": "^4.1",
@@ -45,6 +45,14 @@
         {
             "type": "vcs",
             "url": "https://github.com/fleetbase/laravel-model-caching"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/francmut/fleetbase-core-api"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/francmut/fleetbase-fleetops"
         }
     ],
     "autoload": {
