@@ -422,7 +422,7 @@ class CustomerController extends Controller
         // generate verification token
         VerificationCode::generateSmsVerificationFor($user, 'storefront_login', [
             'messageCallback' => function ($verification) use ($about) {
-                return "Your {$about->name} verification code is {$verification->code}";
+                return "{$verification->code} is your {$about->name} code. Protect this code like your favorite recipe! Clean energy delivered right to your door.";
             },
         ]);
 
