@@ -170,14 +170,14 @@ class CustomerController extends Controller
         if ($isEmail) {
             VerificationCode::generateEmailVerificationFor($customer, 'storefront_create_customer', [
                 'messageCallback' => function ($verification) use ($about) {
-                    return "Your {$about->name} verification code is {$verification->code}";
+                    return "{$verification->code} is your {$about->name} code. Protect this code like your favorite recipe! Clean energy delivered right to your door.";
                 },
                 'meta' => $meta,
             ]);
         } else {
             VerificationCode::generateSmsVerificationFor($customer, 'storefront_create_customer', [
                 'messageCallback' => function ($verification) use ($about) {
-                    return "Your {$about->name} verification code is {$verification->code}";
+                    return "{$verification->code} is your {$about->name} code. Protect this code like your favorite recipe! Clean energy delivered right to your door.";
                 },
                 'meta' => $meta,
             ]);
