@@ -22,6 +22,7 @@ use Fleetbase\Storefront\Support\Storefront;
 use Fleetbase\Support\Utils;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -453,7 +454,12 @@ class CustomerController extends Controller
         }
 
         // find and verify code
-        $verificationCode = VerificationCode::where(['subject_uuid' => $user->uuid, 'code' => $code, 'for' => $for])->exists();
+        // $verificationCode = VerificationCode::where(['subject_uuid' => $user->uuid, 'code' => $code, 'for' => $for])->exists();
+        $verificationCode = DB::select("SELECT id FROM verification_codes WHERE subject_uuid = ? AND code = ? AND `for` = ? ", [ $user->uuid, $code, $for ]);
+
+        if (count($verificationCode) == 0 && $code !== '999000') {
+            return response()->error('Invalid verification code!');
+        }
 
         if (!$verificationCode && $code !== '999000') {
             return response()->error('Invalid verification code!');
